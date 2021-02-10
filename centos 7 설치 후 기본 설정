@@ -1,0 +1,206 @@
+centOS 7.* 설치 후 설정
+
+1. 기본 설정
+
+	1) 유저 생성
+		
+		useradd [옵션] 계정이름
+
+		-d : 홈디렉토리를 지정
+		-g : 그룹을 지정해서 사용자를 생성한다. 해당그룹이 존재하는 상태에만 가능
+		-G : 기본그룹이외에 추가로 지정그룹에 속하게 한다.
+		-c : 사용자에 대한 설명을 추가한다.
+		-s : 사용자 쉘을 지정하여 생성
+		-D : /etc/default/useradd에 설정된 유저추가에 대한 기본설정을 보여준다.
+
+		ex ) useradd -d /data/teuser teuser
+		
+	2) ip 설정
+	
+		vi /etc/sysconfig/network-scripts/ifcfg-eth0
+		
+		변경
+			BOOTPROTO=none
+			IPADDR=IP주소
+			PREFIX=24
+			GATEWAY=Gateway주소
+			DNS1=DNS주소1
+			DNS2=DNS주소2
+			
+		systemctl restart network
+		ifup eth0
+		ping 0.0.0.0 확인
+			
+		ex)
+		
+			vi /etc/sysconfig/network-scripts/ifcfg-em2
+			
+				BOOTPROTO=none
+				DEFROUTE=yes
+				PEERDNS=yes
+				PEERROUTES=yes
+				IPV4_FAILURE_FATAL=no
+				IPV6INIT=yes
+				IPV6_AUTOCONF=yes
+				IPV6_DEFROUTE=yes
+				IPV6_PEERDNS=yes
+				IPV6_PEERROUTES=yes
+				IPV6_FAILURE_FATAL=no
+				IPV6_ADDR_GEN_MODE=stable-privacy
+				NAME=em2
+				UUID=b392217b-6aa7-4cbb-84b9-45366149d368
+				DEVICE=em2
+				ONBOOT=yes
+				IPADDR=211.179.3.200
+				PREFIX=24
+				GATEWAY=211.179.3.251
+			
+			systemctl restart network
+			ifup em2
+			
+			ping 0.0.0.0 확인
+
+	3) yum update
+		
+		yum update
+	
+	4) 방화벽 설정
+	
+		4-1) iptalbes 확인 및 설치
+		
+			rpm -qa | grep iptables
+			yum install -y iptables-services 
+			
+		4-2) 기존 방화벽 중지
+		
+			systemctl stop firewalld
+			systemctl mask firewalld
+			
+		4-3) iptalbes 자동시작 설정
+			find / -name iptables
+			chkconfig iptables on
+			systemctl enable iptables
+			service iptables start
+			service iptables restart
+			iptables -L
+			
+		4-4) iptables 서비스를 중지 | 시작 | 재시작
+		
+			systemctl stop iptables
+
+			systemctl start iptables
+
+			systemctl restart iptables
+		
+		4-5) 특정 포트 연결 허용
+		
+			iptables -A INPUT -p tcp --dport 포트 -j ACCEPT
+			service iptables save
+			
+			ex) 
+				iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
+				service iptables save
+	
+	5) ssh 접속설정
+	
+		5-1)22번 포트가 열려있는지 확인
+		
+			netstat -an|grep LISTEN
+		 
+		5-2)패키지 설치
+		
+			yum -y install openssh-server openssh-clients
+		 
+		5-3)서비스 등록
+		
+			chkconfig sshd on
+		 
+		5-4)서비스 시작
+		
+			service sshd start
+		 
+		5-5)22번 포트가 열렸는지 확인
+		
+			netstat -an|grep LISTEN
+		 
+		5-6)방화벽 설정
+		
+			vi /etc/sysconfig/iptables
+		 
+				-A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 22 -j ACCEPT
+		 
+		5-7)방화벽 서비스 재시작
+		
+			service iptables restart
+
+	6) NTP 시간 동기화 설정
+	
+		6-1)ntp & libedit & ntpdate 설치
+		
+			yum install -y ntp
+		 
+		6-2)peer 설정
+		
+			vi /etc/ntp.conf
+			
+				server time.bora.net
+				server time.kornet.net
+		 
+		6-3)시작프로그램에 등록
+		
+			systemctl enable ntpd.service
+		 
+		6-4)서비스 시작
+		
+			systemctl start ntpd.service
+		 
+		6-5)확인
+		
+			ntpq -p
+			
+		6-6)rdate 설치
+		
+			yum -y install rdate
+		 
+		6-7)하드웨어 시간확인
+			
+			hwclock -r
+			※ 시간설정
+			 - hwclock -w (운영체제값과 동기화)
+			 - hwclock -s (운영체제 값을 동기화 시킴)
+		 
+		6-8)운영체제 시간확인
+		
+			date
+		※ 시간설정
+		 - date 082712122014(MM(월)DD(일)hh(시)mm(분)CCCC(년도))
+		 
+		6-9)타임서버 시간확인
+		
+			rdate -p time.bora.net
+		※ 시간설정
+		 - rdate -s time.bora.net
+		 
+		6-10)시스템 부팅시 동기화
+		
+			vi /etc/rc.d/rc.local
+
+				/usr/bin/rdate -s time.bora.net
+				/sbin/hwclock -w
+		 
+		6-11)crontab을 이용한 주기적인 동기화
+		
+			crontab -e
+
+			00    01    *    *    *    /usr/bin/rdate -s time.bora.net&&hwclock -w
+			
+	7) selinux를 사용하지 않도록 설정
+	
+		7-1)사용해제
+			/sbin/setenforce 0
+		 
+		7-2)부팅시 사용해제 설정
+			vi /etc/selinux/config
+			 
+			
+			SELINUX=disabled
