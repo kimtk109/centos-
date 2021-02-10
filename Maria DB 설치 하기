@@ -1,4 +1,4 @@
-#1. MariaDB yum repo 등록
+1. MariaDB yum repo 등록
 
 $vi /etc/yum.repos.d/MariaDB.repo
 
@@ -12,7 +12,7 @@ gpgcheck=1
 
 mariadb 10.4 버전을 baseurl로 등록하였습니다. 다른 버전을 다운받고 싶다면 baseurl을 수정해주세요.
 
-#2. MariaDB 설치 및 확인
+2. MariaDB 설치 및 확인
 
 $yum install MariaDB
 
@@ -26,7 +26,7 @@ MariaDB-server-10.4.12-1.el7.centos.x86_64
 $mariadb --version
 mariadb Ver 15.1 Distrib 10.4.12-MariaDB, for Linux (x86_64) using readline 5.1
 
-#3. MariaDB 실행 및 비밀번호 변경
+3. MariaDB 실행 및 비밀번호 변경
 
 //mariadb 실행
 $ systemctl start mariadb
@@ -63,7 +63,7 @@ default-character-set = utf8mb4
 //mariadb 재시작
 systemctl restart mariadb
 
-#5. mariaDB 로그인 및 CharacterSet 확인
+5. mariaDB 로그인 및 CharacterSet 확인
 
 $ mysql -u root -p
 Enter password: 설정한 비밀번호 입력
@@ -73,8 +73,13 @@ characterSet이 utf8mb4로 변경되었는지 확인합니다.
 
 > show variables like 'c%';
 
-#6. linux 리부팅 시 자동으로 실행되도록 설정
+6. linux 리부팅 시 자동으로 실행되도록 설정
 $ systemctl enable mariadb
 $ systemctl is-enabled mariadb
 enabled
+
+mysql 자동실행 확인
+chkconfig --list | grep mysqld
+
+ex) mysqld          0:off   1:off   2:off   3:on    4:off   5:off   6:off
 
