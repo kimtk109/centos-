@@ -1,0 +1,43 @@
+	1. DB 복구
+		
+		$ mysql -uroot -p < 백업파일.sql
+
+	2. DB 접속
+		
+		$ mysql -u root -p 패스워드
+		
+	3. DB 테이블 확인
+		
+		>> SHOW DATABASES;
+		
+	4. 유저 계정 확인
+	
+		>> use mysql;
+		>> select host, user from user;
+
+		ex)
+			+-----------------------+---------+
+			| host                  | user    |
+			+-----------------------+---------+
+			| 127.0.0.1             | root    |
+			| ::1                   | root    |
+			| localhost             |         |
+			| localhost             | root    |
+			| localhost.localdomain |         |
+			| localhost.localdomain | root    |
+			+-----------------------+---------+
+		
+	5. 계정 추가 및 외부 접근 허용
+	
+		GRANT ALL PRIVILEGES ON 디비이름.* TO 사용자계정@'연결허용호스트' IDENTIFIED BY '패스워드';
+		FLUSH PRIVILEGES;
+		
+		ex)연결호스트에서 % 시 모든 아이피 허용
+		
+			grant all privileges on isac_bot_2_d.* to isac2_d@'%' identified by '1234qweR!';
+			FLUSH PRIVILEGES;
+		
+	6. 계정 삭제
+	
+		DLETE FROM user WHERE user='사용자계정';
+		FLUSH PRIVILEGES;
